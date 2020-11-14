@@ -54,24 +54,32 @@ int main(int argc, char *argv[])
     image_sobeled.resize(image->bmpSize, 255);
     inData = data;
     //mythread(findEdge, image->bmpWidth, image->bmpHeight);
+
+    //creating variables to manipulate
     int height = image->bmpHeight;
     int width = image->bmpWidth;
     //divide height and width into chunks and run each chunk
     //on its own thread.
+
+    //This int will give me the width of each segmented image
+    //after it has been split depending on the number of threads
     unsigned int threadWidth = width/numThreads;
+    //will keep track of which current segment the findEdge is looking at
     unsigned int counter = 0;
+    //pushing all threads onto vector to join for later
     std::vector<std::thread> vectorThread;
     for(int i = 0; i < numThreads; i++){
-      
+      //creating a new thread and having it call findEdge with segmented data
       std::thread newThread(findEdge, width, height, counter, counter + threadWidth);
+      //pushing that thread onto a vector to join for later
       vectorThread.push_back(move(newThread));
+      //keeps track of which segment of the bitmap is currently being worked on
       counter += threadWidth;
     }
+    //making a join for each thread in the vector of threads 
     for(int i = 0; i < numThreads; i++){
       vectorThread[i].join();
     }
-    
-
     /// Write image data passed as argument to a bitmap file
     image->writeGrayBmp(&image_sobeled[0]);
     image_sobeled.clear();
